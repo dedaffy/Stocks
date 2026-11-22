@@ -152,7 +152,6 @@ async function loadWeather() {
     
     const { latitude, longitude } = geoData.results[0];
     
-    // Get current + daily forecast
     const weatherRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`
     );
@@ -184,21 +183,23 @@ async function loadWeather() {
     
     const info = weatherMap[current.weather_code] || { icon: "🌡️", desc: "Unknown" };
     
-    // Current weather
     document.getElementById('wtemp').textContent = info.icon + " " + Math.round(current.temperature_2m) + "°";
     document.getElementById('wdesc').textContent = info.desc;
     
-    // Build 4-day forecast
+    // Build forecast with real weekday names
     let forecastHTML = `<div style="margin-top:12px; font-size:0.95rem;">`;
-    const days = ["Today", "Tomorrow", "Day 3", "Day 4"];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     
     for (let i = 0; i < 4; i++) {
+      const date = new Date(daily.time[i]);
+      const dayLabel = i === 0 ? "Today" : dayNames[date.getDay()];
       const dayIcon = weatherMap[daily.weather_code[i]]?.icon || "🌡️";
       const max = Math.round(daily.temperature_2m_max[i]);
       const min = Math.round(daily.temperature_2m_min[i]);
+      
       forecastHTML += `
         <div style="display:flex; justify-content:space-between; margin:4px 0;">
-          <span>${days[i]}</span>
+          <span>${dayLabel}</span>
           <span>${dayIcon} ${max}° / ${min}°</span>
         </div>
       `;
