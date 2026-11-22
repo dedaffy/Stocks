@@ -56,6 +56,32 @@
     color: #8b949e;
     font-size: 0.95rem;
   }
+
+  /* Weather panel */
+  .weather {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 320px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #30363d;
+    text-align: center;
+  }
+  .weather .temp {
+    font-size: 3.2rem;
+    font-weight: 600;
+    margin: 8px 0;
+  }
+  .weather .desc {
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+  }
+  .weather .details {
+    font-size: 1rem;
+    color: #8b949e;
+  }
 </style>
 </head>
 <body>
@@ -64,11 +90,20 @@
 <div class="grid" id="grid"></div>
 <div class="updated" id="updated"></div>
 
+<div class="weather" id="weather">
+  <div class="desc" id="wdesc">Loading weather...</div>
+  <div class="temp" id="wtemp">--°</div>
+  <div class="details" id="wdetails"></div>
+</div>
+
 <script>
-const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Your key
+const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Your Finnhub key
 const SYMBOLS = ['TSLA','PLTR','NVDA','AMZN','GOOG','AMD','INTC'];
 
-async function loadData() {
+// Change this to your city (uses Open-Meteo, no API key needed)
+const CITY = "Copenhagen";  
+
+async function loadStocks() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   
@@ -102,8 +137,42 @@ async function loadData() {
     'Last updated: ' + new Date().toLocaleTimeString();
 }
 
-loadData();
-setInterval(loadData, 45000);
+async function loadWeather() {
+  try {
+    // Get coordinates for the city
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(CITY)}&count=1`);
+    const geoData = await geoRes.json();
+    if (!geoData.results || !geoData.results[0]) return;
+    
+    const { latitude, longitude } = geoData.results[0];
+    
+    // Get current weather
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`);
+    const w = await weatherRes.json();
+    const current = w.current;
+    
+    const weatherCodes = {
+      0: "Clear", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+      45: "Fog", 48: "Fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+      61: "Light rain", 63: "Rain", 65: "Heavy rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow",
+      80: "Rain showers", 81: "Rain showers", 82: "Heavy rain showers", 95: "Thunderstorm"
+    };
+    
+    const desc = weatherCodes[current.weather_code] || "Unknown";
+    
+    document.getElementById('wtemp').textContent = Math.round(current.temperature_2m) + "°";
+    document.getElementById('wdesc').textContent = desc;
+    document.getElementById('wdetails').innerHTML = 
+      `Humidity: ${current.relative_humidity_2m}%<br>Wind: ${Math.round(current.wind_speed_10m)} km/h<br>${CITY}`;
+  } catch (e) {
+    document.getElementById('wdesc').textContent = "Weather unavailable";
+  }
+}
+
+loadStocks();
+loadWeather();
+setInterval(loadStocks, 45000);
+setInterval(loadWeather, 600000); // weather every 10 min
 </script>
 </body>
 </html>
