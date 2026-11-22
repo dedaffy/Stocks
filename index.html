@@ -98,24 +98,18 @@
 
 <script>
 const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Your Finnhub key
-const STOCKS = [
-  { symbol: 'TSLA', name: 'Tesla' },
-  { symbol: 'PLTR', name: 'Palantir' },
-  { symbol: 'NVDA', name: 'NVIDIA' },
-  { symbol: 'AMZN', name: 'Amazon' },
-  { symbol: 'GOOG', name: 'Alphabet' },
-  { symbol: 'AMD', name: 'AMD' },
-  { symbol: 'INTC', name: 'Intel' },
-  { symbol: 'SPY', name: 'S&P 500' }
-];
+const SYMBOLS = ['TSLA','PLTR','NVDA','AMZN','GOOG','AMD','INTC','SPY'];
+
+// Change this to your city (uses Open-Meteo, no API key needed)
+const CITY = "Roskilde";  
 
 async function loadStocks() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   
-  for (const stock of STOCKS) {
+  for (const symbol of SYMBOLS) {
     try {
-      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${API_KEY}`);
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`);
       const data = await res.json();
       
       if (!data.c) continue;
@@ -127,7 +121,7 @@ async function loadStocks() {
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <div class="symbol">${stock.name}</div>
+        <div class="symbol">${symbol}</div>
         <div class="price">$${data.c.toFixed(2)}</div>
         <div class="change ${isUp ? 'up' : 'down'}">
           ${isUp ? '+' : ''}${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)
@@ -135,7 +129,7 @@ async function loadStocks() {
       `;
       grid.appendChild(card);
     } catch (e) {
-      console.error(stock.symbol, e);
+      console.error(symbol, e);
     }
   }
   
