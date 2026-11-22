@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Stocks</title>
+<style>
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    font-size: 3.2rem;
+    margin: 10px 0 30px;
+    font-weight: 600;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #161b22;
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    border: 1px solid #30363d;
+  }
+  .symbol {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .price {
+    font-size: 3.4rem;
+    font-weight: 600;
+    margin: 10px 0;
+  }
+  .change {
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  .up { color: #3fb950; }
+  .down { color: #f85149; }
+  .updated {
+    text-align: center;
+    margin-top: 30px;
+    color: #8b949e;
+    font-size: 1.1rem;
+  }
+  #setup {
+    max-width: 500px;
+    margin: 100px auto;
+    text-align: center;
+  }
+  input, button {
+    font-size: 1.3rem;
+    padding: 14px 18px;
+    margin: 8px;
+    border-radius: 10px;
+    border: none;
+  }
+  input { width: 320px; }
+  button {
+    background: #238636;
+    color: white;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h1>Stock Dashboard</h1>
+  <p>Enter your free Finnhub API key:</p>
+  <input type="text" id="apikey" placeholder="Your Finnhub API key">
+  <br>
+  <button onclick="saveKey()">Start Dashboard</button>
+  <p style="margin-top:20px;font-size:0.95rem;color:#8b949e;">
+    Get a free key at <a href="https://finnhub.io/register" target="_blank" style="color:#58a6ff;">finnhub.io/register</a>
+  </p>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <h1>My Stocks</h1>
+  <div class="grid" id="grid"></div>
+  <div class="updated" id="updated"></div>
+</div>
+
+<script>
+const SYMBOLS = ['TSLA','PLTR','NVDA','AMZN','GOOG','AMD','INTC'];
+let apiKey = localStorage.getItem('finnhubKey');
+
+function saveKey() {
+  const key = document.getElementById('apikey').value.trim();
+  if (!key) return alert('Please enter an API key');
+  localStorage.setItem('finnhubKey', key);
+  apiKey = key;
+  start();
+}
+
+function start() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+  setInterval(loadData, 45000); // refresh every 45 seconds
+}
+
+async function loadData() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  for (const symbol of SYMBOLS) {
+    try {
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+      const data = await res.json();
+      
+      if (!data.c) continue;
+      
+      const change = data.d;
+      const pct = data.dp;
+      const isUp = change >= 0;
+      
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="symbol">${symbol}</div>
+        <div class="price">$${data.c.toFixed(2)}</div>
+        <div class="change ${isUp ? 'up' : 'down'}">
+          ${isUp ? '+' : ''}${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)
+        </div>
+      `;
+      grid.appendChild(card);
+    } catch (e) {
+      console.error(symbol, e);
+    }
+  }
+  
+  document.getElementById('updated').textContent = 
+    'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+if (apiKey) start();
+</script>
+</body>
+</html>
