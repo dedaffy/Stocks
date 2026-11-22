@@ -94,15 +94,20 @@
     min-width: 280px;
   }
   .clock {
-    font-size: 3.6rem;
+    font-size: 3.8rem;
     font-weight: 600;
-    letter-spacing: 2px;
-    margin-bottom: 4px;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .day {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 2px;
   }
   .date {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     color: #8b949e;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
   .market-status {
     font-size: 1.2rem;
@@ -134,7 +139,8 @@
 </div>
 
 <div class="info-panel">
-  <div class="clock" id="clock">--:--:--</div>
+  <div class="clock" id="clock">--:--</div>
+  <div class="day" id="day">--</div>
   <div class="date" id="date">--</div>
   <div class="market-status" id="market">Checking...</div>
 </div>
@@ -259,10 +265,23 @@ async function loadWeather() {
 
 function updateClock() {
   const now = new Date();
-  document.getElementById('clock').textContent = 
-    now.toLocaleTimeString('da-DK', { hour12: false });
-  document.getElementById('date').textContent = 
-    now.toLocaleDateString('da-DK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  
+  // Clock: 12:49
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${hours}:${minutes}`;
+  
+  // Day of week (English)
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  document.getElementById('day').textContent = dayNames[now.getDay()];
+  
+  // Date in English with Danish style (day month year)
+  const months = ["January", "February", "March", "April", "May", "June", 
+                  "July", "August", "September", "October", "November", "December"];
+  const day = now.getDate();
+  const month = months[now.getMonth()];
+  const year = now.getFullYear();
+  document.getElementById('date').textContent = `${day} ${month} ${year}`;
 }
 
 function updateMarketStatus() {
