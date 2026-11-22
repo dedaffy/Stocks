@@ -114,56 +114,25 @@ async function loadStocks() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   
-  const now = Math.floor(Date.now() / 1000);
-  const threeMonthsAgo = now - (90 * 24 * 60 * 60); // ~90 days ago
-  
   for (const stock of STOCKS) {
     try {
-      // Get current quote
-      const quoteRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${API_KEY}`);
-      const quote = await quoteRes.json();
-      if (!quote.c) continue;
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${API_KEY}`);
+      const data = await res.json();
       
-      // Get 3-month candle data
-      const candleRes = await fetch(
-        `https://finnhub.io/api/v1/stock/candle?symbol=${stock.symbol}&resolution=D&from=${threeMonthsAgo}&to=${now}&token=${API_KEY}`
-      );
-      const candle = await candleRes.json();
+      if (!data.c) continue;
       
-      let threeMonthChange = null;
-      let threeMonthPct = null;
-      
-      if (candle.s === 'ok' && candle.c && candle.c.length > 0) {
-        const oldPrice = candle.c[0];          // price ~90 days ago
-        const currentPrice = quote.c;
-        threeMonthChange = currentPrice - oldPrice;
-        threeMonthPct = (threeMonthChange / oldPrice) * 100;
-      }
-      
-      const dayChange = quote.d;
-      const dayPct = quote.dp;
-      const dayIsUp = dayChange >= 0;
+      const change = data.d;
+      const pct = data.dp;
+      const isUp = change >= 0;
       
       const card = document.createElement('div');
       card.className = 'card';
-      
-      let threeMonthHTML = '';
-      if (threeMonthPct !== null) {
-        const isUp3m = threeMonthChange >= 0;
-        threeMonthHTML = `
-          <div class="change ${isUp3m ? 'up' : 'down'}" style="margin-top:6px; font-size:1rem;">
-            3M: ${isUp3m ? '+' : ''}${threeMonthChange.toFixed(2)} (${isUp3m ? '+' : ''}${threeMonthPct.toFixed(1)}%)
-          </div>
-        `;
-      }
-      
       card.innerHTML = `
         <div class="symbol">${stock.name}</div>
-        <div class="price">$${quote.c.toFixed(2)}</div>
-        <div class="change ${dayIsUp ? 'up' : 'down'}">
-          Today: ${dayIsUp ? '+' : ''}${dayChange.toFixed(2)} (${dayIsUp ? '+' : ''}${dayPct.toFixed(2)}%)
+        <div class="price">$${data.c.toFixed(2)}</div>
+        <div class="change ${isUp ? 'up' : 'down'}">
+          Today: ${isUp ? '+' : ''}${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)
         </div>
-        ${threeMonthHTML}
       `;
       grid.appendChild(card);
     } catch (e) {
