@@ -97,13 +97,15 @@
 </div>
 
 <script>
-const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Your Finnhub key
+const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';
+const CITY = "Roskilde";   // <-- This line was missing
+
 const STOCKS = [
   { symbol: 'TSLA', name: 'Tesla' },
   { symbol: 'PLTR', name: 'Palantir' },
   { symbol: 'NVDA', name: 'NVIDIA' },
   { symbol: 'AMZN', name: 'Amazon' },
-  { symbol: 'GOOG', name: 'Alphabet' },
+  { symbol: 'GOOG', name: 'Google' },
   { symbol: 'AMD', name: 'AMD' },
   { symbol: 'INTC', name: 'Intel' },
   { symbol: 'SPY', name: 'S&P 500' }
@@ -145,14 +147,12 @@ async function loadStocks() {
 
 async function loadWeather() {
   try {
-    // Get coordinates for the city
     const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(CITY)}&count=1`);
     const geoData = await geoRes.json();
     if (!geoData.results || !geoData.results[0]) return;
     
     const { latitude, longitude } = geoData.results[0];
     
-    // Get current weather
     const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`);
     const w = await weatherRes.json();
     const current = w.current;
@@ -178,7 +178,7 @@ async function loadWeather() {
 loadStocks();
 loadWeather();
 setInterval(loadStocks, 45000);
-setInterval(loadWeather, 600000); // weather every 10 min
+setInterval(loadWeather, 600000);
 </script>
 </body>
 </html>
