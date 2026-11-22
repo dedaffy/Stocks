@@ -57,7 +57,6 @@
     font-size: 0.95rem;
   }
 
-  /* Weather panel */
   .weather {
     position: absolute;
     bottom: 30px;
@@ -98,14 +97,14 @@
 
 <script>
 const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';
-const CITY = "Roskilde";   // <-- This line was missing
+const CITY = "Roskilde";
 
 const STOCKS = [
   { symbol: 'TSLA', name: 'Tesla' },
   { symbol: 'PLTR', name: 'Palantir' },
   { symbol: 'NVDA', name: 'NVIDIA' },
   { symbol: 'AMZN', name: 'Amazon' },
-  { symbol: 'GOOG', name: 'Google' },
+  { symbol: 'GOOG', name: 'Alphabet' },
   { symbol: 'AMD', name: 'AMD' },
   { symbol: 'INTC', name: 'Intel' },
   { symbol: 'SPY', name: 'S&P 500' }
@@ -157,7 +156,6 @@ async function loadWeather() {
     const w = await weatherRes.json();
     const current = w.current;
     
-    // Weather code → icon + description
     const weatherMap = {
       0:  { icon: "☀️",  desc: "Clear" },
       1:  { icon: "🌤️", desc: "Mainly clear" },
