@@ -5,55 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Stocks</title>
 <style>
+  * { box-sizing: border-box; }
   body {
     background: #0d1117;
     color: #e6edf3;
     font-family: system-ui, -apple-system, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 12px;
     min-height: 100vh;
   }
   h1 {
     text-align: center;
-    font-size: 3.2rem;
-    margin: 10px 0 30px;
+    font-size: 2.2rem;
+    margin: 8px 0 16px;
     font-weight: 600;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 20px;
-    max-width: 1800px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    max-width: 1400px;
     margin: 0 auto;
   }
   .card {
     background: #161b22;
-    border-radius: 16px;
-    padding: 28px 24px;
+    border-radius: 12px;
+    padding: 16px 12px;
     text-align: center;
     border: 1px solid #30363d;
   }
   .symbol {
-    font-size: 2.4rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
   .price {
-    font-size: 3.4rem;
+    font-size: 2.1rem;
     font-weight: 600;
-    margin: 10px 0;
+    margin: 6px 0;
   }
   .change {
-    font-size: 1.8rem;
+    font-size: 1.15rem;
     font-weight: 600;
   }
   .up { color: #3fb950; }
   .down { color: #f85149; }
   .updated {
     text-align: center;
-    margin-top: 30px;
+    margin-top: 16px;
     color: #8b949e;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
   }
 </style>
 </head>
@@ -64,7 +65,7 @@
 <div class="updated" id="updated"></div>
 
 <script>
-const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Paste your Finnhub key here
+const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';   // <-- Your key
 const SYMBOLS = ['TSLA','PLTR','NVDA','AMZN','GOOG','AMD','INTC'];
 
 async function loadData() {
@@ -102,7 +103,7 @@ async function loadData() {
 }
 
 loadData();
-setInterval(loadData, 45000); // refresh every 45 seconds
+setInterval(loadData, 45000);
 </script>
 </body>
 </html>
