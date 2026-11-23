@@ -173,8 +173,9 @@
     font-weight: 600;
     color: rgba(255,255,255,0.9);
   }
-  .zone-blue   { background: #1f6feb; }
+.zone-blue   { background: #1f6feb; }
   .zone-green  { background: #238636; }
+  .zone-yellow { background: #e3b341; }
   .zone-orange { background: #d29922; }
   .zone-red    { background: #da3633; }
   .vix-marker {
@@ -215,12 +216,10 @@
 </div>
 
 <div class="vix-panel" id="vix-panel">
-  <div class="vix-title">VIX Volatility</div>
-  <div class="vix-value" id="vix-value">--</div>
-  <div class="vix-change" id="vix-change"></div>
-  <div class="vix-scale">
+<div class="vix-scale">
     <div class="vix-zone zone-blue">Amazing</div>
     <div class="vix-zone zone-green">Calm</div>
+    <div class="vix-zone zone-yellow">Moderate</div>
     <div class="vix-zone zone-orange">Fear</div>
     <div class="vix-zone zone-red">Extreme</div>
     <div class="vix-marker" id="vix-marker"></div>
@@ -228,8 +227,9 @@
   <div class="vix-labels">
     <span>&lt;15</span>
     <span>15-20</span>
-    <span>20-35</span>
-    <span>&gt;35</span>
+    <span>20-30</span>
+    <span>30-40</span>
+    <span>&gt;40</span>
   </div>
 </div>
 
@@ -366,16 +366,20 @@ async function loadVIX() {
   const valueEl = document.getElementById('vix-value');
   const changeEl = document.getElementById('vix-change');
 
-  function updateVixMarker(vix) {
+function updateVixMarker(vix) {
+    // 5 equal zones of 20% each
+    // Blue <15 | Green 15-20 | Yellow 20-30 | Orange 30-40 | Red >40
     let pos;
     if (vix < 15) {
-      pos = (vix / 15) * 25;
+      pos = (vix / 15) * 20;                    // 0-20%
     } else if (vix < 20) {
-      pos = 25 + ((vix - 15) / 5) * 25;
-    } else if (vix < 35) {
-      pos = 50 + ((vix - 20) / 15) * 25;
+      pos = 20 + ((vix - 15) / 5) * 20;          // 20-40%
+    } else if (vix < 30) {
+      pos = 40 + ((vix - 20) / 10) * 20;         // 40-60%
+    } else if (vix < 40) {
+      pos = 60 + ((vix - 30) / 10) * 20;         // 60-80%
     } else {
-      pos = 75 + Math.min(((vix - 35) / 15) * 25, 25);
+      pos = 80 + Math.min(((vix - 40) / 20) * 20, 20); // 80-100%
     }
     pos = Math.max(2, Math.min(98, pos));
     document.getElementById('vix-marker').style.left = pos + '%';
