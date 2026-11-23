@@ -363,55 +363,40 @@ async function loadWeather() {
 
 async function loadVIX() {
   try {
-    // Try real VIX from Yahoo Finance
-    const yahooRes = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d');
-    const yahooData = await yahooRes.json();
-    
-    const result = yahooData.chart.result[0];
-    const vix = result.meta.regularMarketPrice;
-    
-    if (vix) {
-      document.getElementById('vix-value').textContent = vix.toFixed(2);
-      updateVixMarker(vix);
-      document.querySelector('.vix-title').textContent = 'VIX Volatility';
-      return;
-    }
-  } catch (e) {
-    console.log('Yahoo VIX failed, trying VIXY fallback');
-  }
-  
-  // Fallback to VIXY if Yahoo is blocked
-  try {
-    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIXY&token=' + API_KEY);
+    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIX&token=' + API_KEY);
     const data = await res.json();
     
-    if (data.c) {
-      document.getElementById('vix-value').textContent = data.c.toFixed(2);
-      updateVixMarker(data.c);
-      document.querySelector('.vix-title').textContent = 'VIXY (VIX Proxy)';
-    } else {
+    if (!data.c) {
       document.getElementById('vix-value').textContent = 'N/A';
+      return;
     }
+    
+    const vix = data.c;
+    document.getElementById('vix-value').textContent = vix.toFixed(2);
+    
+    // Zones: Blue <15 | Green 15-20 | Orange 20-35 | Red >35
+    // Scale from 5 to 50 for positioning
+    let pos;
+    if (vix < 15) {
+      // Blue zone (0-25% of bar)
+      pos = (vix / 15) * 25;
+    } else if (vix < 20) {
+      // Green zone (25-50%)
+      pos = 25 + ((vix - 15) / 5) * 25;
+    } else if (vix < 35) {
+      // Orange zone (50-75%)
+      pos = 50 + ((vix - 20) / 15) * 25;
+    } else {
+      // Red zone (75-100%)
+      pos = 75 + Math.min(((vix - 35) / 15) * 25, 25);
+    }
+    
+    pos = Math.max(2, Math.min(98, pos));
+    document.getElementById('vix-marker').style.left = pos + '%';
+    
   } catch (e) {
     document.getElementById('vix-value').textContent = 'Error';
   }
-}
-
-function updateVixMarker(vix) {
-  // Zones: Blue <15 | Green 15-20 | Orange 20-35 | Red >35
-  let pos;
-  if (vix < 15) {
-    pos = (vix / 15) * 25;
-  } else if (vix < 20) {
-    pos = 25 + ((vix - 15) / 5) * 25;
-  } else if (vix < 35) {
-    pos = 50 + ((vix - 20) / 15) * 25;
-  } else {
-    pos = 75 + Math.min(((vix - 35) / 15) * 25, 25);
-  }
-  
-  pos = Math.max(2, Math.min(98, pos));
-  document.getElementById('vix-marker').style.left = pos + '%';
 }
 
 function updateClock() {
