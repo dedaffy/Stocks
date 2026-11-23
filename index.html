@@ -400,7 +400,23 @@ async function loadVIX() {
     updateVixMarker(Number(vix));
   }
 
-  // 1. Try Cboe
+  // 1. Try Yahoo first (simpler request)
+  try {
+    const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d');
+    const data = await res.json();
+    const meta = data && data.chart && data.chart.result && data.chart.result[0] ? data.chart.result[0].meta : null;
+    
+    if (meta && meta.regularMarketPrice) {
+      const vix = meta.regularMarketPrice;
+      const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose;
+      showVix(vix, prev, 'Yahoo (VIX Volatility)');
+      return;
+    }
+  } catch (e) {
+    console.log('Yahoo failed', e);
+  }
+
+  // 2. Try Cboe
   try {
     const res = await fetch('https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json');
     const data = await res.json();
@@ -410,20 +426,9 @@ async function loadVIX() {
       showVix(vix, prev, 'Cboe (VIX Volatility)');
       return;
     }
-  } catch (e) {}
-
-  // 2. Try Yahoo via CORS proxy
-  try {
-    const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d');
-    const data = await res.json();
-    const meta = data && data.chart && data.chart.result && data.chart.result[0] ? data.chart.result[0].meta : null;
-    if (meta && meta.regularMarketPrice) {
-      const vix = meta.regularMarketPrice;
-      const prev = meta.chartPreviousClose || meta.previousClose;
-      showVix(vix, prev, 'Yahoo (VIX Volatility)');
-      return;
-    }
-  } catch (e) {}
+  } catch (e) {
+    console.log('Cboe failed', e);
+  }
 
   // 3. Fallback to Finnhub VIXY
   try {
@@ -433,7 +438,9 @@ async function loadVIX() {
       showVix(data.c, data.pc, 'Finnhub VIXY (Proxy)');
       return;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.log('Finnhub failed', e);
+  }
 
   valueEl.textContent = 'N/A';
   titleEl.textContent = 'VIX (Unavailable)';
