@@ -284,7 +284,7 @@ async function loadStocks() {
   }
   
   document.getElementById('updated').textContent = 
-    'Last updated: ' + new Date().toLocaleTimeString();
+  'Last updated: ' + new Date().toLocaleTimeString();
 }
 
 async function loadWeather() {
@@ -465,14 +465,16 @@ function updateClock() {
 
 function updateMarketStatus() {
   const now = new Date();
+  // Convert to New York time
   const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
   const day = nyTime.getDay();
   const hours = nyTime.getHours();
   const minutes = nyTime.getMinutes();
   const timeInMinutes = hours * 60 + minutes;
 
+  // US market hours: Mon-Fri 9:30 - 16:00 NY time
   const isWeekday = day >= 1 && day <= 5;
-  const isOpen = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960;
+  const isOpen = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960; // 9:30 = 570, 16:00 = 960
 
   const statusEl = document.getElementById('market');
   if (isOpen) {
@@ -498,3 +500,4 @@ setInterval(updateMarketStatus, 60000);
 </script>
 </body>
 </html>
+
