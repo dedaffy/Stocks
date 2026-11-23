@@ -363,7 +363,7 @@ async function loadWeather() {
 
 async function loadVIX() {
   try {
-    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIX&token=' + API_KEY);
+    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIXY&token=' + API_KEY);
     const data = await res.json();
     
     if (!data.c) {
