@@ -254,7 +254,8 @@ async function loadWeather() {
     
     for (let i = 0; i < 4; i++) {
       const date = new Date(daily.time[i]);
-      const dayLabel = i === 0 ? "Today" : dayNames[date.getDay()];
+      const weekday = dayNames[date.getDay()];
+      const dayLabel = i === 0 ? "Today - " + weekday : weekday;
       const dayIcon = (weatherMap[daily.weather_code[i]] || {icon:"🌡️"}).icon;
       const max = Math.round(daily.temperature_2m_max[i]);
       const min = Math.round(daily.temperature_2m_min[i]);
