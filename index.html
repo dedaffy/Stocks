@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stocks</title>
+<title>My Stocks</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -13,106 +13,109 @@
     margin: 0;
     padding: 12px;
     min-height: 100vh;
+    padding-bottom: 280px; /* Important: space for the bottom panels */
   }
   h1 {
     text-align: center;
-    font-size: 2.2rem;
-    margin: 8px 0 16px;
+    font-size: 2rem;
+    margin: 6px 0 14px;
     font-weight: 600;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
     max-width: 1400px;
     margin: 0 auto;
   }
   .card {
     background: #161b22;
     border-radius: 12px;
-    padding: 16px 12px;
+    padding: 14px 10px;
     text-align: center;
     border: 1px solid #30363d;
   }
   .symbol {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .price {
-    font-size: 2.1rem;
+    font-size: 1.9rem;
     font-weight: 600;
-    margin: 6px 0;
+    margin: 4px 0;
   }
   .change {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 600;
   }
   .up { color: #3fb950; }
   .down { color: #f85149; }
   .updated {
     text-align: center;
-    margin-top: 16px;
+    margin-top: 12px;
     color: #8b949e;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .weather {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
-    width: 320px;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
     background: #161b22;
     border-radius: 16px;
-    padding: 20px;
+    padding: 16px;
     border: 1px solid #30363d;
     text-align: center;
+    z-index: 10;
   }
   .weather .temp {
-    font-size: 3.2rem;
+    font-size: 2.8rem;
     font-weight: 600;
-    margin: 8px 0;
+    margin: 6px 0;
   }
   .weather .desc {
-    font-size: 1.3rem;
-    margin-bottom: 6px;
+    font-size: 1.2rem;
+    margin-bottom: 4px;
   }
   .weather .details {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #8b949e;
   }
 
   .info-panel {
     position: absolute;
-    bottom: 30px;
-    left: 30px;
+    bottom: 20px;
+    left: 20px;
     background: #161b22;
     border-radius: 16px;
-    padding: 24px 28px;
+    padding: 18px 22px;
     border: 1px solid #30363d;
     text-align: center;
-    min-width: 280px;
+    min-width: 240px;
+    z-index: 10;
   }
   .clock {
-    font-size: 3.8rem;
+    font-size: 3.2rem;
     font-weight: 600;
     letter-spacing: 1px;
     margin-bottom: 2px;
   }
   .day {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 500;
     margin-bottom: 2px;
   }
   .date {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #8b949e;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
   .market-status {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    padding: 6px 12px;
+    padding: 5px 12px;
     border-radius: 8px;
     display: inline-block;
   }
@@ -157,9 +160,10 @@ const STOCKS = [
   { symbol: 'GOOG', name: 'Google' },
   { symbol: 'AMD', name: 'AMD' },
   { symbol: 'INTC', name: 'Intel' },
-  { symbol: 'ANT', name: 'Anthropic' },
-  { symbol: 'SPCX', name: 'SpaceX' },
   { symbol: 'SPY', name: 'S&P 500' }
+  // Add your extra stocks here if you still want them
+  // { symbol: 'XXXX', name: 'SpaceX' },
+  // { symbol: 'XXXX', name: 'Anthropic' }
 ];
 
 async function loadStocks() {
@@ -168,7 +172,7 @@ async function loadStocks() {
   
   for (const stock of STOCKS) {
     try {
-      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${API_KEY}`);
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=\( {stock.symbol}&token= \){API_KEY}`);
       const data = await res.json();
       
       if (!data.c) continue;
@@ -183,7 +187,7 @@ async function loadStocks() {
         <div class="symbol">${stock.name}</div>
         <div class="price">$${data.c.toFixed(2)}</div>
         <div class="change ${isUp ? 'up' : 'down'}">
-          Today: ${isUp ? '+' : ''}${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)
+          Today: \( {isUp ? '+' : ''} \){change.toFixed(2)} (\( {isUp ? '+' : ''} \){pct.toFixed(2)}%)
         </div>
       `;
       grid.appendChild(card);
@@ -205,7 +209,7 @@ async function loadWeather() {
     const { latitude, longitude } = geoData.results[0];
     
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`
+      `https://api.open-meteo.com/v1/forecast?latitude=\( {latitude}&longitude= \){longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`
     );
     const w = await weatherRes.json();
     const current = w.current;
@@ -238,7 +242,7 @@ async function loadWeather() {
     document.getElementById('wtemp').textContent = info.icon + " " + Math.round(current.temperature_2m) + "°";
     document.getElementById('wdesc').textContent = info.desc;
     
-    let forecastHTML = `<div style="margin-top:12px; font-size:0.95rem;">`;
+    let forecastHTML = `<div style="margin-top:10px; font-size:0.9rem;">`;
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     
     for (let i = 0; i < 4; i++) {
@@ -249,7 +253,7 @@ async function loadWeather() {
       const min = Math.round(daily.temperature_2m_min[i]);
       
       forecastHTML += `
-        <div style="display:flex; justify-content:space-between; margin:4px 0;">
+        <div style="display:flex; justify-content:space-between; margin:3px 0;">
           <span>${dayLabel}</span>
           <span>${dayIcon} ${max}° / ${min}°</span>
         </div>
@@ -259,7 +263,7 @@ async function loadWeather() {
     
     document.getElementById('wdetails').innerHTML = 
       `Humidity: ${current.relative_humidity_2m}% · Wind: ${Math.round(current.wind_speed_10m)} km/h<br>
-       ${CITY}${forecastHTML}`;
+       \( {CITY} \){forecastHTML}`;
   } catch (e) {
     document.getElementById('wdesc').textContent = "Weather unavailable";
   }
@@ -268,22 +272,17 @@ async function loadWeather() {
 function updateClock() {
   const now = new Date();
   
-  // Clock: 12:49
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('clock').textContent = `${hours}:${minutes}`;
+  document.getElementById('clock').textContent = `\( {hours}: \){minutes}`;
   
-  // Day of week (English)
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   document.getElementById('day').textContent = dayNames[now.getDay()];
   
-  // Date in English with Danish style (day month year)
   const months = ["January", "February", "March", "April", "May", "June", 
                   "July", "August", "September", "October", "November", "December"];
-  const day = now.getDate();
-  const month = months[now.getMonth()];
-  const year = now.getFullYear();
-  document.getElementById('date').textContent = `${day} ${month} ${year}`;
+  document.getElementById('date').textContent = 
+    `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 }
 
 function updateMarketStatus() {
