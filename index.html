@@ -283,8 +283,11 @@ async function loadStocks() {
     }
   }
   
-  document.getElementById('updated').textContent = 
-  'Last updated: ' + new Date().toLocaleTimeString();
+  const now = new Date();
+const hours = String(now.getHours()).padStart(2, '0');
+const minutes = String(now.getMinutes()).padStart(2, '0');
+document.getElementById('updated').textContent = 
+  'Last updated: ' + hours + ':' + minutes;
 }
 
 async function loadWeather() {
@@ -500,4 +503,5 @@ setInterval(updateMarketStatus, 60000);
 </script>
 </body>
 </html>
+
 
