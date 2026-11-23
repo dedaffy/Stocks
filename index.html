@@ -58,6 +58,7 @@
     font-size: 0.9rem;
   }
 
+  /* Weather - right */
   .weather {
     position: absolute;
     bottom: 20px;
@@ -84,6 +85,7 @@
     color: #8b949e;
   }
 
+  /* Clock - left */
   .info-panel {
     position: absolute;
     bottom: 20px;
@@ -127,6 +129,68 @@
     background: #6e7681;
     color: white;
   }
+
+  /* VIX - center */
+  .vix-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #161b22;
+    border-radius: 16px;
+    padding: 16px 22px;
+    border: 1px solid #30363d;
+    text-align: center;
+    min-width: 340px;
+    z-index: 10;
+  }
+  .vix-title {
+    font-size: 1.1rem;
+    color: #8b949e;
+    margin-bottom: 4px;
+  }
+  .vix-value {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .vix-scale {
+    position: relative;
+    height: 28px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 6px;
+  }
+  .vix-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .zone-blue   { background: #1f6feb; }
+  .zone-green  { background: #238636; }
+  .zone-orange { background: #d29922; }
+  .zone-red    { background: #da3633; }
+  .vix-marker {
+    position: absolute;
+    top: -6px;
+    width: 4px;
+    height: 40px;
+    background: white;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+    transform: translateX(-50%);
+  }
+  .vix-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #8b949e;
+  }
 </style>
 </head>
 <body>
@@ -135,17 +199,38 @@
 <div class="grid" id="grid"></div>
 <div class="updated" id="updated"></div>
 
+<!-- Weather (right) -->
 <div class="weather" id="weather">
   <div class="desc" id="wdesc">Loading weather...</div>
   <div class="temp" id="wtemp">--°</div>
   <div class="details" id="wdetails"></div>
 </div>
 
+<!-- Clock (left) -->
 <div class="info-panel">
   <div class="clock" id="clock">--:--</div>
   <div class="day" id="day">--</div>
   <div class="date" id="date">--</div>
   <div class="market-status" id="market">Checking...</div>
+</div>
+
+<!-- VIX (center) -->
+<div class="vix-panel" id="vix-panel">
+  <div class="vix-title">VIX Volatility</div>
+  <div class="vix-value" id="vix-value">--</div>
+  <div class="vix-scale">
+    <div class="vix-zone zone-blue">Amazing</div>
+    <div class="vix-zone zone-green">Calm</div>
+    <div class="vix-zone zone-orange">Fear</div>
+    <div class="vix-zone zone-red">Extreme</div>
+    <div class="vix-marker" id="vix-marker"></div>
+  </div>
+  <div class="vix-labels">
+    <span>&lt;15</span>
+    <span>15-20</span>
+    <span>20-35</span>
+    <span>&gt;35</span>
+  </div>
 </div>
 
 <script>
@@ -276,6 +361,44 @@ async function loadWeather() {
   }
 }
 
+async function loadVIX() {
+  try {
+    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIX&token=' + API_KEY);
+    const data = await res.json();
+    
+    if (!data.c) {
+      document.getElementById('vix-value').textContent = 'N/A';
+      return;
+    }
+    
+    const vix = data.c;
+    document.getElementById('vix-value').textContent = vix.toFixed(2);
+    
+    // Zones: Blue <15 | Green 15-20 | Orange 20-35 | Red >35
+    // Scale from 5 to 50 for positioning
+    let pos;
+    if (vix < 15) {
+      // Blue zone (0-25% of bar)
+      pos = (vix / 15) * 25;
+    } else if (vix < 20) {
+      // Green zone (25-50%)
+      pos = 25 + ((vix - 15) / 5) * 25;
+    } else if (vix < 35) {
+      // Orange zone (50-75%)
+      pos = 50 + ((vix - 20) / 15) * 25;
+    } else {
+      // Red zone (75-100%)
+      pos = 75 + Math.min(((vix - 35) / 15) * 25, 25);
+    }
+    
+    pos = Math.max(2, Math.min(98, pos));
+    document.getElementById('vix-marker').style.left = pos + '%';
+    
+  } catch (e) {
+    document.getElementById('vix-value').textContent = 'Error';
+  }
+}
+
 function updateClock() {
   const now = new Date();
   
@@ -315,11 +438,13 @@ function updateMarketStatus() {
 
 loadStocks();
 loadWeather();
+loadVIX();
 updateClock();
 updateMarketStatus();
 
 setInterval(loadStocks, 45000);
 setInterval(loadWeather, 600000);
+setInterval(loadVIX, 60000);
 setInterval(updateClock, 1000);
 setInterval(updateMarketStatus, 60000);
 </script>
