@@ -362,10 +362,10 @@ async function loadWeather() {
 }
 
 async function loadVIX() {
+async function loadVIX() {
   const titleEl = document.querySelector('.vix-title');
   const valueEl = document.getElementById('vix-value');
 
-  // Helper to update the marker
   function updateVixMarker(vix) {
     let pos;
     if (vix < 15) {
@@ -381,28 +381,57 @@ async function loadVIX() {
     document.getElementById('vix-marker').style.left = pos + '%';
   }
 
-  // 1. Try Cboe delayed quotes
+  function showVix(vix, prevClose, sourceName) {
+    valueEl.textContent = Number(vix).toFixed(2);
+    titleEl.textContent = sourceName;
+
+    // Remove old change line if it exists
+    let changeEl = document.getElementById('vix-change');
+    if (!changeEl) {
+      changeEl = document.createElement('div');
+      changeEl.id = 'vix-change';
+      changeEl.style.fontSize = '1.05rem';
+      changeEl.style.fontWeight = '600';
+      changeEl.style.marginTop = '4px';
+      valueEl.parentNode.insertBefore(changeEl, valueEl.nextSibling);
+    }
+
+    if (prevClose && prevClose > 0) {
+      const change = vix - prevClose;
+      const pct = (change / prevClose) * 100;
+      const isUp = change >= 0;
+      changeEl.style.color = isUp ? '#3fb950' : '#f85149';
+      changeEl.textContent = 
+        'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
+        ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)';
+    } else {
+      changeEl.textContent = '';
+    }
+
+    updateVixMarker(Number(vix));
+  }
+
+  // 1. Try Cboe
   try {
     const res = await fetch('https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json');
     const data = await res.json();
     const vix = data?.data?.current_price || data?.current_price;
+    const prev = data?.data?.prev_close || data?.prev_close;
     if (vix) {
-      valueEl.textContent = Number(vix).toFixed(2);
-      titleEl.textContent = 'Cboe (VIX Volatility)';
-      updateVixMarker(Number(vix));
+      showVix(vix, prev, 'Cboe (VIX Volatility)');
       return;
     }
   } catch (e) {}
 
-  // 2. Try Yahoo Finance via free CORS proxy
+  // 2. Try Yahoo via CORS proxy
   try {
-    const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d');
+    const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d');
     const data = await res.json();
-    const vix = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const meta = data?.chart?.result?.[0]?.meta;
+    const vix = meta?.regularMarketPrice;
+    const prev = meta?.chartPreviousClose || meta?.previousClose;
     if (vix) {
-      valueEl.textContent = Number(vix).toFixed(2);
-      titleEl.textContent = 'Yahoo (VIX Volatility)';
-      updateVixMarker(Number(vix));
+      showVix(vix, prev, 'Yahoo (VIX Volatility)');
       return;
     }
   } catch (e) {}
@@ -412,17 +441,16 @@ async function loadVIX() {
     const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIXY&token=' + API_KEY);
     const data = await res.json();
     if (data.c) {
-      valueEl.textContent = data.c.toFixed(2);
-      titleEl.textContent = 'Finnhub VIXY (Proxy)';
-      updateVixMarker(data.c);
+      showVix(data.c, data.pc, 'Finnhub VIXY (Proxy)');
       return;
     }
   } catch (e) {}
 
-  // Nothing worked
   valueEl.textContent = 'N/A';
   titleEl.textContent = 'VIX (Unavailable)';
-}
+  const changeEl = document.getElementById('vix-change');
+  if (changeEl) changeEl.textContent = '';
+       }
 
 function updateVixMarker(vix) {
   // Zones: Blue <15 | Green 15-20 | Orange 20-35 | Red >35
