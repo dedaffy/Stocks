@@ -138,7 +138,7 @@
     padding: 16px 22px;
     border: 1px solid #30363d;
     text-align: center;
-    min-width: 340px;
+    min-width: 380px;
     z-index: 10;
   }
   .vix-title {
@@ -169,11 +169,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    color: rgba(255,255,255,0.9);
+    color: rgba(255,255,255,0.95);
   }
-.zone-blue   { background: #1f6feb; }
+  .zone-blue   { background: #1f6feb; }
   .zone-green  { background: #238636; }
   .zone-yellow { background: #e3b341; }
   .zone-orange { background: #d29922; }
@@ -216,7 +216,10 @@
 </div>
 
 <div class="vix-panel" id="vix-panel">
-<div class="vix-scale">
+  <div class="vix-title">VIX Volatility</div>
+  <div class="vix-value" id="vix-value">--</div>
+  <div class="vix-change" id="vix-change"></div>
+  <div class="vix-scale">
     <div class="vix-zone zone-blue">Amazing</div>
     <div class="vix-zone zone-green">Calm</div>
     <div class="vix-zone zone-yellow">Moderate</div>
@@ -366,20 +369,19 @@ async function loadVIX() {
   const valueEl = document.getElementById('vix-value');
   const changeEl = document.getElementById('vix-change');
 
-function updateVixMarker(vix) {
-    // 5 equal zones of 20% each
-    // Blue <15 | Green 15-20 | Yellow 20-30 | Orange 30-40 | Red >40
+  function updateVixMarker(vix) {
+    // 5 zones: Blue <15 | Green 15-20 | Yellow 20-30 | Orange 30-40 | Red >40
     let pos;
     if (vix < 15) {
-      pos = (vix / 15) * 20;                    // 0-20%
+      pos = (vix / 15) * 20;
     } else if (vix < 20) {
-      pos = 20 + ((vix - 15) / 5) * 20;          // 20-40%
+      pos = 20 + ((vix - 15) / 5) * 20;
     } else if (vix < 30) {
-      pos = 40 + ((vix - 20) / 10) * 20;         // 40-60%
+      pos = 40 + ((vix - 20) / 10) * 20;
     } else if (vix < 40) {
-      pos = 60 + ((vix - 30) / 10) * 20;         // 60-80%
+      pos = 60 + ((vix - 30) / 10) * 20;
     } else {
-      pos = 80 + Math.min(((vix - 40) / 20) * 20, 20); // 80-100%
+      pos = 80 + Math.min(((vix - 40) / 20) * 20, 20);
     }
     pos = Math.max(2, Math.min(98, pos));
     document.getElementById('vix-marker').style.left = pos + '%';
@@ -404,7 +406,7 @@ function updateVixMarker(vix) {
     updateVixMarker(Number(vix));
   }
 
-  // 1. Try Yahoo first (simpler request)
+  // 1. Yahoo
   try {
     const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d');
     const data = await res.json();
@@ -416,11 +418,9 @@ function updateVixMarker(vix) {
       showVix(vix, prev, 'Yahoo (VIX Volatility)');
       return;
     }
-  } catch (e) {
-    console.log('Yahoo failed', e);
-  }
+  } catch (e) {}
 
-  // 2. Try Cboe
+  // 2. Cboe
   try {
     const res = await fetch('https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json');
     const data = await res.json();
@@ -430,11 +430,9 @@ function updateVixMarker(vix) {
       showVix(vix, prev, 'Cboe (VIX Volatility)');
       return;
     }
-  } catch (e) {
-    console.log('Cboe failed', e);
-  }
+  } catch (e) {}
 
-  // 3. Fallback to Finnhub VIXY
+  // 3. Finnhub VIXY fallback
   try {
     const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIXY&token=' + API_KEY);
     const data = await res.json();
@@ -442,9 +440,7 @@ function updateVixMarker(vix) {
       showVix(data.c, data.pc, 'Finnhub VIXY (Proxy)');
       return;
     }
-  } catch (e) {
-    console.log('Finnhub failed', e);
-  }
+  } catch (e) {}
 
   valueEl.textContent = 'N/A';
   titleEl.textContent = 'VIX (Unavailable)';
