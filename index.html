@@ -58,7 +58,6 @@
     font-size: 0.9rem;
   }
 
-  /* Weather - right */
   .weather {
     position: absolute;
     bottom: 20px;
@@ -85,7 +84,6 @@
     color: #8b949e;
   }
 
-  /* Clock - left */
   .info-panel {
     position: absolute;
     bottom: 20px;
@@ -130,7 +128,6 @@
     color: white;
   }
 
-  /* VIX - center */
   .vix-panel {
     position: absolute;
     bottom: 20px;
@@ -152,6 +149,11 @@
   .vix-value {
     font-size: 2.4rem;
     font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .vix-change {
+    font-size: 1.05rem;
+    font-weight: 600;
     margin-bottom: 10px;
   }
   .vix-scale {
@@ -199,14 +201,12 @@
 <div class="grid" id="grid"></div>
 <div class="updated" id="updated"></div>
 
-<!-- Weather (right) -->
 <div class="weather" id="weather">
   <div class="desc" id="wdesc">Loading weather...</div>
   <div class="temp" id="wtemp">--°</div>
   <div class="details" id="wdetails"></div>
 </div>
 
-<!-- Clock (left) -->
 <div class="info-panel">
   <div class="clock" id="clock">--:--</div>
   <div class="day" id="day">--</div>
@@ -214,10 +214,10 @@
   <div class="market-status" id="market">Checking...</div>
 </div>
 
-<!-- VIX (center) -->
 <div class="vix-panel" id="vix-panel">
   <div class="vix-title">VIX Volatility</div>
   <div class="vix-value" id="vix-value">--</div>
+  <div class="vix-change" id="vix-change"></div>
   <div class="vix-scale">
     <div class="vix-zone zone-blue">Amazing</div>
     <div class="vix-zone zone-green">Calm</div>
@@ -362,9 +362,9 @@ async function loadWeather() {
 }
 
 async function loadVIX() {
-async function loadVIX() {
   const titleEl = document.querySelector('.vix-title');
   const valueEl = document.getElementById('vix-value');
+  const changeEl = document.getElementById('vix-change');
 
   function updateVixMarker(vix) {
     let pos;
@@ -385,17 +385,6 @@ async function loadVIX() {
     valueEl.textContent = Number(vix).toFixed(2);
     titleEl.textContent = sourceName;
 
-    // Remove old change line if it exists
-    let changeEl = document.getElementById('vix-change');
-    if (!changeEl) {
-      changeEl = document.createElement('div');
-      changeEl.id = 'vix-change';
-      changeEl.style.fontSize = '1.05rem';
-      changeEl.style.fontWeight = '600';
-      changeEl.style.marginTop = '4px';
-      valueEl.parentNode.insertBefore(changeEl, valueEl.nextSibling);
-    }
-
     if (prevClose && prevClose > 0) {
       const change = vix - prevClose;
       const pct = (change / prevClose) * 100;
@@ -415,8 +404,8 @@ async function loadVIX() {
   try {
     const res = await fetch('https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json');
     const data = await res.json();
-    const vix = data?.data?.current_price || data?.current_price;
-    const prev = data?.data?.prev_close || data?.prev_close;
+    const vix = data && data.data ? data.data.current_price : (data ? data.current_price : null);
+    const prev = data && data.data ? data.data.prev_close : (data ? data.prev_close : null);
     if (vix) {
       showVix(vix, prev, 'Cboe (VIX Volatility)');
       return;
@@ -427,10 +416,10 @@ async function loadVIX() {
   try {
     const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d');
     const data = await res.json();
-    const meta = data?.chart?.result?.[0]?.meta;
-    const vix = meta?.regularMarketPrice;
-    const prev = meta?.chartPreviousClose || meta?.previousClose;
-    if (vix) {
+    const meta = data && data.chart && data.chart.result && data.chart.result[0] ? data.chart.result[0].meta : null;
+    if (meta && meta.regularMarketPrice) {
+      const vix = meta.regularMarketPrice;
+      const prev = meta.chartPreviousClose || meta.previousClose;
       showVix(vix, prev, 'Yahoo (VIX Volatility)');
       return;
     }
@@ -448,25 +437,7 @@ async function loadVIX() {
 
   valueEl.textContent = 'N/A';
   titleEl.textContent = 'VIX (Unavailable)';
-  const changeEl = document.getElementById('vix-change');
-  if (changeEl) changeEl.textContent = '';
-       }
-
-function updateVixMarker(vix) {
-  // Zones: Blue <15 | Green 15-20 | Orange 20-35 | Red >35
-  let pos;
-  if (vix < 15) {
-    pos = (vix / 15) * 25;
-  } else if (vix < 20) {
-    pos = 25 + ((vix - 15) / 5) * 25;
-  } else if (vix < 35) {
-    pos = 50 + ((vix - 20) / 15) * 25;
-  } else {
-    pos = 75 + Math.min(((vix - 35) / 15) * 25, 25);
-  }
-  
-  pos = Math.max(2, Math.min(98, pos));
-  document.getElementById('vix-marker').style.left = pos + '%';
+  changeEl.textContent = '';
 }
 
 function updateClock() {
