@@ -13,7 +13,7 @@
     margin: 0;
     padding: 12px;
     min-height: 100vh;
-    padding-bottom: 280px; /* Important: space for the bottom panels */
+    padding-bottom: 280px;
   }
   h1 {
     text-align: center;
@@ -160,9 +160,9 @@ const STOCKS = [
   { symbol: 'GOOG', name: 'Google' },
   { symbol: 'AMD', name: 'AMD' },
   { symbol: 'INTC', name: 'Intel' },
-  { symbol: 'ANT', name: 'Anthropic' },
+  { symbol: 'SPY', name: 'S&P 500' },
   { symbol: 'SPCX', name: 'SpaceX' },
-  { symbol: 'SPY', name: 'S&P 500' }
+  { symbol: 'ANT', name: 'Anthropic' }
 ];
 
 async function loadStocks() {
@@ -171,7 +171,7 @@ async function loadStocks() {
   
   for (const stock of STOCKS) {
     try {
-      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=\( {stock.symbol}&token= \){API_KEY}`);
+      const res = await fetch('https://finnhub.io/api/v1/quote?symbol=' + stock.symbol + '&token=' + API_KEY);
       const data = await res.json();
       
       if (!data.c) continue;
@@ -182,13 +182,13 @@ async function loadStocks() {
       
       const card = document.createElement('div');
       card.className = 'card';
-      card.innerHTML = `
-        <div class="symbol">${stock.name}</div>
-        <div class="price">$${data.c.toFixed(2)}</div>
-        <div class="change ${isUp ? 'up' : 'down'}">
-          Today: \( {isUp ? '+' : ''} \){change.toFixed(2)} (\( {isUp ? '+' : ''} \){pct.toFixed(2)}%)
-        </div>
-      `;
+      card.innerHTML = 
+        '<div class="symbol">' + stock.name + '</div>' +
+        '<div class="price">$' + data.c.toFixed(2) + '</div>' +
+        '<div class="change ' + (isUp ? 'up' : 'down') + '">' +
+          'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
+          ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)' +
+        '</div>';
       grid.appendChild(card);
     } catch (e) {
       console.error(stock.symbol, e);
@@ -201,14 +201,22 @@ async function loadStocks() {
 
 async function loadWeather() {
   try {
-    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(CITY)}&count=1`);
+    const geoRes = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(CITY) + '&count=1');
     const geoData = await geoRes.json();
-    if (!geoData.results || !geoData.results[0]) return;
+    if (!geoData.results || !geoData.results[0]) {
+      document.getElementById('wdesc').textContent = 'Weather unavailable';
+      return;
+    }
     
-    const { latitude, longitude } = geoData.results[0];
+    const lat = geoData.results[0].latitude;
+    const lon = geoData.results[0].longitude;
     
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=\( {latitude}&longitude= \){longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`
+      'https://api.open-meteo.com/v1/forecast?latitude=' + lat + 
+      '&longitude=' + lon + 
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
+      '&timezone=auto&forecast_days=4'
     );
     const w = await weatherRes.json();
     const current = w.current;
@@ -241,28 +249,27 @@ async function loadWeather() {
     document.getElementById('wtemp').textContent = info.icon + " " + Math.round(current.temperature_2m) + "°";
     document.getElementById('wdesc').textContent = info.desc;
     
-    let forecastHTML = `<div style="margin-top:10px; font-size:0.9rem;">`;
+    let forecastHTML = '<div style="margin-top:10px; font-size:0.9rem;">';
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     
     for (let i = 0; i < 4; i++) {
       const date = new Date(daily.time[i]);
       const dayLabel = i === 0 ? "Today" : dayNames[date.getDay()];
-      const dayIcon = weatherMap[daily.weather_code[i]]?.icon || "🌡️";
+      const dayIcon = (weatherMap[daily.weather_code[i]] || {icon:"🌡️"}).icon;
       const max = Math.round(daily.temperature_2m_max[i]);
       const min = Math.round(daily.temperature_2m_min[i]);
       
-      forecastHTML += `
-        <div style="display:flex; justify-content:space-between; margin:3px 0;">
-          <span>${dayLabel}</span>
-          <span>${dayIcon} ${max}° / ${min}°</span>
-        </div>
-      `;
+      forecastHTML += 
+        '<div style="display:flex; justify-content:space-between; margin:3px 0;">' +
+          '<span>' + dayLabel + '</span>' +
+          '<span>' + dayIcon + ' ' + max + '° / ' + min + '°</span>' +
+        '</div>';
     }
-    forecastHTML += `</div>`;
+    forecastHTML += '</div>';
     
     document.getElementById('wdetails').innerHTML = 
-      `Humidity: ${current.relative_humidity_2m}% · Wind: ${Math.round(current.wind_speed_10m)} km/h<br>
-       \( {CITY} \){forecastHTML}`;
+      'Humidity: ' + current.relative_humidity_2m + '% · Wind: ' + Math.round(current.wind_speed_10m) + ' km/h<br>' +
+      CITY + forecastHTML;
   } catch (e) {
     document.getElementById('wdesc').textContent = "Weather unavailable";
   }
@@ -273,7 +280,7 @@ function updateClock() {
   
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('clock').textContent = `\( {hours}: \){minutes}`;
+  document.getElementById('clock').textContent = hours + ':' + minutes;
   
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   document.getElementById('day').textContent = dayNames[now.getDay()];
@@ -281,7 +288,7 @@ function updateClock() {
   const months = ["January", "February", "March", "April", "May", "June", 
                   "July", "August", "September", "October", "November", "December"];
   document.getElementById('date').textContent = 
-    `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
 }
 
 function updateMarketStatus() {
