@@ -24,16 +24,26 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px;
+    gap: 14px;
     max-width: 1400px;
     margin: 0 auto;
   }
   .card {
     background: #161b22;
-    border-radius: 12px;
-    padding: 14px 10px;
+    border-radius: 16px;
+    padding: 18px 14px;
     text-align: center;
     border: 1px solid #30363d;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: box-shadow 0.2s ease;
+  }
+  .card.up-glow {
+    box-shadow: 0 0 18px rgba(63, 185, 80, 0.18);
+    border-color: rgba(63, 185, 80, 0.3);
+  }
+  .card.down-glow {
+    box-shadow: 0 0 18px rgba(248, 81, 73, 0.18);
+    border-color: rgba(248, 81, 73, 0.3);
   }
   .symbol {
     font-size: 1.4rem;
@@ -269,7 +279,7 @@ async function loadStocks() {
       const isUp = change >= 0;
       
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'card ' + (isUp ? 'up-glow' : 'down-glow');
       card.innerHTML = 
         '<div class="symbol">' + stock.name + '</div>' +
         '<div class="price">$' + data.c.toFixed(2) + '</div>' +
@@ -283,12 +293,12 @@ async function loadStocks() {
     }
   }
   
-const now = new Date();
-const hours = String(now.getHours()).padStart(2, '0');
-const minutes = String(now.getMinutes()).padStart(2, '0');
-const seconds = String(now.getSeconds()).padStart(2, '0');
-document.getElementById('updated').textContent = 
-  'Last updated: ' + hours + ':' + minutes + ':' + seconds;
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('updated').textContent = 
+    'Last updated: ' + hours + ':' + minutes + ':' + seconds;
 }
 
 async function loadWeather() {
@@ -391,26 +401,26 @@ async function loadVIX() {
     document.getElementById('vix-marker').style.left = pos + '%';
   }
 
-function showVix(vix, prevClose, sourceName) {
-  valueEl.textContent = Number(vix).toFixed(2);
-  titleEl.textContent = sourceName;
+  function showVix(vix, prevClose, sourceName) {
+    valueEl.textContent = Number(vix).toFixed(2);
+    titleEl.textContent = sourceName;
 
-  if (prevClose && prevClose > 0) {
-    const change = vix - prevClose;
-    const pct = (change / prevClose) * 100;
-    const isUp = change >= 0;
-    
-    // Reversed colors for VIX: up = red (bad), down = green (good)
-    changeEl.style.color = isUp ? '#f85149' : '#3fb950';
-    changeEl.textContent = 
-      'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
-      ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)';
-  } else {
-    changeEl.textContent = '';
+    if (prevClose && prevClose > 0) {
+      const change = vix - prevClose;
+      const pct = (change / prevClose) * 100;
+      const isUp = change >= 0;
+      
+      // Reversed colors for VIX: up = red (bad), down = green (good)
+      changeEl.style.color = isUp ? '#f85149' : '#3fb950';
+      changeEl.textContent = 
+        'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
+        ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)';
+    } else {
+      changeEl.textContent = '';
+    }
+
+    updateVixMarker(Number(vix));
   }
-
-  updateVixMarker(Number(vix));
-}
 
   // 1. Yahoo
   try {
@@ -506,6 +516,3 @@ setInterval(updateMarketStatus, 60000);
 </script>
 </body>
 </html>
-
-
-
