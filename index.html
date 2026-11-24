@@ -391,24 +391,26 @@ async function loadVIX() {
     document.getElementById('vix-marker').style.left = pos + '%';
   }
 
-  function showVix(vix, prevClose, sourceName) {
-    valueEl.textContent = Number(vix).toFixed(2);
-    titleEl.textContent = sourceName;
+function showVix(vix, prevClose, sourceName) {
+  valueEl.textContent = Number(vix).toFixed(2);
+  titleEl.textContent = sourceName;
 
-    if (prevClose && prevClose > 0) {
-      const change = vix - prevClose;
-      const pct = (change / prevClose) * 100;
-      const isUp = change >= 0;
-      changeEl.style.color = isUp ? '#3fb950' : '#f85149';
-      changeEl.textContent = 
-        'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
-        ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)';
-    } else {
-      changeEl.textContent = '';
-    }
-
-    updateVixMarker(Number(vix));
+  if (prevClose && prevClose > 0) {
+    const change = vix - prevClose;
+    const pct = (change / prevClose) * 100;
+    const isUp = change >= 0;
+    
+    // Reversed colors for VIX: up = red (bad), down = green (good)
+    changeEl.style.color = isUp ? '#f85149' : '#3fb950';
+    changeEl.textContent = 
+      'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
+      ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)';
+  } else {
+    changeEl.textContent = '';
   }
+
+  updateVixMarker(Number(vix));
+}
 
   // 1. Yahoo
   try {
