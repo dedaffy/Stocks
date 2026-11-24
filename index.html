@@ -267,9 +267,9 @@ const STOCKS = [
   { symbol: 'INTC', name: 'Intel' },
   { symbol: 'SPCX', name: 'SpaceX' },
   { symbol: 'ANT', name: 'Anthropic' },
-  { symbol: 'BINANCE:BTCUSDT', name: 'Bitcoin' },
+  { symbol: 'BTC-USD', name: 'Bitcoin' },
   { symbol: 'QQQ', name: 'NASDAQ' },
-  { symbol: 'SPY', name: 'S&P500' }
+  { symbol: 'SXR8.DE', name: 'S&P500' }
 ];
 
 async function loadStocks() {
@@ -278,20 +278,26 @@ async function loadStocks() {
   
   for (const stock of STOCKS) {
     try {
-      const res = await fetch('https://finnhub.io/api/v1/quote?symbol=' + stock.symbol + '&token=' + API_KEY);
+      // Yahoo Finance via free CORS proxy
+      const url = 'https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/' + 
+                  encodeURIComponent(stock.symbol) + '?interval=1d&range=1d';
+      const res = await fetch(url);
       const data = await res.json();
       
-      if (!data.c) continue;
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta || !meta.regularMarketPrice) continue;
       
-      const change = data.d;
-      const pct = data.dp;
+      const price = meta.regularMarketPrice;
+      const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose;
+      const change = prev ? (price - prev) : 0;
+      const pct = prev ? ((change / prev) * 100) : 0;
       const isUp = change >= 0;
       
       const card = document.createElement('div');
       card.className = 'card ' + (isUp ? 'up-glow' : 'down-glow');
       card.innerHTML = 
         '<div class="symbol">' + stock.name + '</div>' +
-        '<div class="price">$' + data.c.toFixed(2) + '</div>' +
+        '<div class="price">' + (stock.symbol.includes('BTC') ? '' : '$') + price.toFixed(2) + '</div>' +
         '<div class="change ' + (isUp ? 'up' : 'down') + '">' +
           'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
           ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)' +
@@ -301,6 +307,14 @@ async function loadStocks() {
       console.error(stock.symbol, e);
     }
   }
+  
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('updated').textContent = 
+    'Last updated: ' + hours + ':' + minutes + ':' + seconds;
+}
   
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
