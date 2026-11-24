@@ -150,7 +150,14 @@
     text-align: center;
     min-width: 380px;
     z-index: 10;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
   }
+  .vix-panel.glow-blue   { box-shadow: 0 0 22px rgba(31, 111, 235, 0.35); border-color: rgba(31, 111, 235, 0.5); }
+  .vix-panel.glow-green  { box-shadow: 0 0 22px rgba(35, 134, 54, 0.35);  border-color: rgba(35, 134, 54, 0.5); }
+  .vix-panel.glow-yellow { box-shadow: 0 0 22px rgba(227, 179, 65, 0.35); border-color: rgba(227, 179, 65, 0.5); }
+  .vix-panel.glow-orange { box-shadow: 0 0 22px rgba(252, 132, 3, 0.35);  border-color: rgba(252, 132, 3, 0.5); }
+  .vix-panel.glow-red    { box-shadow: 0 0 22px rgba(218, 54, 51, 0.35);  border-color: rgba(218, 54, 51, 0.5); }
+
   .vix-title {
     font-size: 1.1rem;
     color: #8b949e;
@@ -420,6 +427,21 @@ async function loadVIX() {
     }
 
     updateVixMarker(Number(vix));
+
+    // Apply glow based on zone
+    const panel = document.getElementById('vix-panel');
+    panel.className = 'vix-panel';
+    if (vix < 15) {
+      panel.classList.add('glow-blue');
+    } else if (vix < 20) {
+      panel.classList.add('glow-green');
+    } else if (vix < 30) {
+      panel.classList.add('glow-yellow');
+    } else if (vix < 40) {
+      panel.classList.add('glow-orange');
+    } else {
+      panel.classList.add('glow-red');
+    }
   }
 
   // 1. Yahoo
