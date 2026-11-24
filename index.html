@@ -254,7 +254,6 @@
 </div>
 
 <script>
-const API_KEY = 'dc1c80hr01qgfid73g3gdc1c80hr01qgfid73g40';
 const CITY = "Roskilde";
 
 const STOCKS = [
@@ -265,11 +264,11 @@ const STOCKS = [
   { symbol: 'GOOG', name: 'Google' },
   { symbol: 'AMD', name: 'AMD' },
   { symbol: 'INTC', name: 'Intel' },
-  { symbol: 'SPCX', name: 'SpaceX' },
-  { symbol: 'ANT', name: 'Anthropic' },
+  { symbol: 'QQQ', name: 'QQQ' },
+  { symbol: 'SXR8.DE', name: 'S&P 500' },
   { symbol: 'BTC-USD', name: 'Bitcoin' },
-  { symbol: 'QQQ', name: 'NASDAQ' },
-  { symbol: 'SXR8.DE', name: 'S&P500' }
+  { symbol: 'SPCX', name: 'SpaceX' },
+  { symbol: 'ANT', name: 'Anthropic' }
 ];
 
 async function loadStocks() {
@@ -278,26 +277,26 @@ async function loadStocks() {
   
   for (const stock of STOCKS) {
     try {
-      // Yahoo Finance via free CORS proxy
       const url = 'https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/' + 
                   encodeURIComponent(stock.symbol) + '?interval=1d&range=1d';
       const res = await fetch(url);
       const data = await res.json();
       
-      const meta = data?.chart?.result?.[0]?.meta;
+      const meta = data && data.chart && data.chart.result && data.chart.result[0] ? data.chart.result[0].meta : null;
       if (!meta || !meta.regularMarketPrice) continue;
       
       const price = meta.regularMarketPrice;
-      const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose;
-      const change = prev ? (price - prev) : 0;
+      const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose || price;
+      const change = price - prev;
       const pct = prev ? ((change / prev) * 100) : 0;
       const isUp = change >= 0;
       
       const card = document.createElement('div');
       card.className = 'card ' + (isUp ? 'up-glow' : 'down-glow');
+      const currency = stock.symbol === 'BTC-USD' ? '' : (stock.symbol.includes('.DE') ? '€' : '$');
       card.innerHTML = 
         '<div class="symbol">' + stock.name + '</div>' +
-        '<div class="price">' + (stock.symbol.includes('BTC') ? '' : '$') + price.toFixed(2) + '</div>' +
+        '<div class="price">' + currency + price.toFixed(2) + '</div>' +
         '<div class="change ' + (isUp ? 'up' : 'down') + '">' +
           'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
           ' (' + (isUp ? '+' : '') + pct.toFixed(2) + '%)' +
@@ -307,14 +306,6 @@ async function loadStocks() {
       console.error(stock.symbol, e);
     }
   }
-  
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  document.getElementById('updated').textContent = 
-    'Last updated: ' + hours + ':' + minutes + ':' + seconds;
-}
   
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
@@ -407,7 +398,6 @@ async function loadVIX() {
   const changeEl = document.getElementById('vix-change');
 
   function updateVixMarker(vix) {
-    // 5 zones: Blue <15 | Green 15-20 | Yellow 20-30 | Orange 30-40 | Red >40
     let pos;
     if (vix < 15) {
       pos = (vix / 15) * 20;
@@ -432,8 +422,6 @@ async function loadVIX() {
       const change = vix - prevClose;
       const pct = (change / prevClose) * 100;
       const isUp = change >= 0;
-      
-      // Reversed colors for VIX: up = red (bad), down = green (good)
       changeEl.style.color = isUp ? '#f85149' : '#3fb950';
       changeEl.textContent = 
         'Today: ' + (isUp ? '+' : '') + change.toFixed(2) + 
@@ -444,7 +432,6 @@ async function loadVIX() {
 
     updateVixMarker(Number(vix));
 
-    // Apply glow based on zone
     const panel = document.getElementById('vix-panel');
     panel.className = 'vix-panel';
     if (vix < 15) {
@@ -460,7 +447,6 @@ async function loadVIX() {
     }
   }
 
-  // 1. Yahoo
   try {
     const res = await fetch('https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d');
     const data = await res.json();
@@ -470,28 +456,6 @@ async function loadVIX() {
       const vix = meta.regularMarketPrice;
       const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose;
       showVix(vix, prev, 'Yahoo (VIX Volatility)');
-      return;
-    }
-  } catch (e) {}
-
-  // 2. Cboe
-  try {
-    const res = await fetch('https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json');
-    const data = await res.json();
-    const vix = data && data.data ? data.data.current_price : (data ? data.current_price : null);
-    const prev = data && data.data ? data.data.prev_close : (data ? data.prev_close : null);
-    if (vix) {
-      showVix(vix, prev, 'Cboe (VIX Volatility)');
-      return;
-    }
-  } catch (e) {}
-
-  // 3. Finnhub VIXY fallback
-  try {
-    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=VIXY&token=' + API_KEY);
-    const data = await res.json();
-    if (data.c) {
-      showVix(data.c, data.pc, 'Finnhub VIXY (Proxy)');
       return;
     }
   } catch (e) {}
@@ -519,16 +483,14 @@ function updateClock() {
 
 function updateMarketStatus() {
   const now = new Date();
-  // Convert to New York time
   const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
   const day = nyTime.getDay();
   const hours = nyTime.getHours();
   const minutes = nyTime.getMinutes();
   const timeInMinutes = hours * 60 + minutes;
 
-  // US market hours: Mon-Fri 9:30 - 16:00 NY time
   const isWeekday = day >= 1 && day <= 5;
-  const isOpen = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960; // 9:30 = 570, 16:00 = 960
+  const isOpen = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960;
 
   const statusEl = document.getElementById('market');
   if (isOpen) {
