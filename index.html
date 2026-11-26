@@ -483,17 +483,42 @@ function updateClock() {
 
 function updateMarketStatus() {
   const now = new Date();
+  // Convert to New York time
   const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
   const day = nyTime.getDay();
   const hours = nyTime.getHours();
   const minutes = nyTime.getMinutes();
   const timeInMinutes = hours * 60 + minutes;
 
+  // US market hours: Mon-Fri 9:30 - 16:00 NY time
   const isWeekday = day >= 1 && day <= 5;
-  const isOpen = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960;
+  const isOpenTime = timeInMinutes >= 570 && timeInMinutes < 960; // 9:30 = 570, 16:00 = 960
+
+  // Major US market holidays (full closures) - add more as needed
+  const holidays = [
+    '2026-01-01', // New Year's Day
+    '2026-01-19', // Martin Luther King Jr. Day
+    '2026-02-16', // Presidents' Day
+    '2026-04-03', // Good Friday
+    '2026-05-25', // Memorial Day
+    '2026-06-19', // Juneteenth
+    '2026-07-03', // Independence Day (observed)
+    '2026-09-07', // Labor Day
+    '2026-11-26', // Thanksgiving Day
+    '2026-12-25', // Christmas Day
+    '2027-01-01', // New Year's Day 2027
+  ];
+
+  // Format today's date as YYYY-MM-DD in New York timezone
+  const year = nyTime.getFullYear();
+  const month = String(nyTime.getMonth() + 1).padStart(2, '0');
+  const date = String(nyTime.getDate()).padStart(2, '0');
+  const todayStr = year + '-' + month + '-' + date;
+
+  const isHoliday = holidays.includes(todayStr);
 
   const statusEl = document.getElementById('market');
-  if (isOpen) {
+  if (isWeekday && isOpenTime && !isHoliday) {
     statusEl.textContent = 'Market Open';
     statusEl.className = 'market-status market-open';
   } else {
