@@ -481,7 +481,7 @@ function updateClock() {
     now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
 }
 
-function updateMarketStatus() {
+async function updateMarketStatus() {
   const now = new Date();
   // Convert to New York time
   const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -490,40 +490,60 @@ function updateMarketStatus() {
   const minutes = nyTime.getMinutes();
   const timeInMinutes = hours * 60 + minutes;
 
-  // US market hours: Mon-Fri 9:30 - 16:00 NY time
   const isWeekday = day >= 1 && day <= 5;
-  const isOpenTime = timeInMinutes >= 570 && timeInMinutes < 960; // 9:30 = 570, 16:00 = 960
+  const isOpenTime = timeInMinutes >= 570 && timeInMinutes < 960; // 9:30 - 16:00
 
-  // Major US market holidays (full closures) - add more as needed
-  const holidays = [
-    '2026-01-01', // New Year's Day
-    '2026-01-19', // Martin Luther King Jr. Day
-    '2026-02-16', // Presidents' Day
-    '2026-04-03', // Good Friday
-    '2026-05-25', // Memorial Day
-    '2026-06-19', // Juneteenth
-    '2026-07-03', // Independence Day (observed)
-    '2026-09-07', // Labor Day
-    '2026-11-26', // Thanksgiving Day
-    '2026-12-25', // Christmas Day
-    '2027-01-01', // New Year's Day 2027
-  ];
-
-  // Format today's date as YYYY-MM-DD in New York timezone
+  // Format today's date as YYYY-MM-DD
   const year = nyTime.getFullYear();
   const month = String(nyTime.getMonth() + 1).padStart(2, '0');
   const date = String(nyTime.getDate()).padStart(2, '0');
   const todayStr = year + '-' + month + '-' + date;
 
-  const isHoliday = holidays.includes(todayStr);
+  let isHoliday = false;
+  let holidayName = '';
+
+  try {
+    // Fetch US public holidays for the current year
+    const res = await fetch('https://date.nager.at/api/v3/PublicHolidays/' + year + '/US');
+    const holidays = await res.json();
+
+    const todayHoliday = holidays.find(h => h.date === todayStr);
+    if (todayHoliday) {
+      isHoliday = true;
+      holidayName = todayHoliday.localName || todayHoliday.name;
+    }
+  } catch (e) {
+    console.log('Holiday API failed, falling back to normal check');
+  }
 
   const statusEl = document.getElementById('market');
-  if (isWeekday && isOpenTime && !isHoliday) {
+
+  if (isHoliday) {
+    statusEl.textContent = 'Holiday Closed';
+    statusEl.className = 'market-status market-closed';
+    // Show holiday name below if there's space
+    statusEl.title = holidayName; // tooltip on hover
+    // Optional: add a small line under the status
+    let holidayLine = document.getElementById('holiday-name');
+    if (!holidayLine) {
+      holidayLine = document.createElement('div');
+      holidayLine.id = 'holiday-name';
+      holidayLine.style.fontSize = '0.85rem';
+      holidayLine.style.color = '#8b949e';
+      holidayLine.style.marginTop = '4px';
+      statusEl.parentNode.appendChild(holidayLine);
+    }
+    holidayLine.textContent = holidayName;
+  } else if (isWeekday && isOpenTime) {
     statusEl.textContent = 'Market Open';
     statusEl.className = 'market-status market-open';
+    const holidayLine = document.getElementById('holiday-name');
+    if (holidayLine) holidayLine.textContent = '';
   } else {
     statusEl.textContent = 'Market Closed';
     statusEl.className = 'market-status market-closed';
+    const holidayLine = document.getElementById('holiday-name');
+    if (holidayLine) holidayLine.textContent = '';
   }
 }
 
