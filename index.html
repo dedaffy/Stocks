@@ -348,16 +348,23 @@ async function loadWeather() {
       51: { icon: "⛅☔", desc: "Light drizzle" },
       53: { icon: "☔", desc: "Drizzle" },
       55: { icon: "☔", desc: "Heavy drizzle" },
+      56: { icon: "❄️☔",  desc: "Freezing drizzle" },
+      57: { icon: "❄️☔",  desc: "Freezing drizzle" },
       61: { icon: "☔", desc: "Light rain" },
       63: { icon: "☔", desc: "Rain" },
       65: { icon: "🌧️☔", desc: "Heavy rain" },
+      66: { icon: "❄️☔",  desc: "Freezing rain" },
+      67: { icon: "❄️☔",  desc: "Freezing rain" },
       71: { icon: "⛅❄️",  desc: "Light snow" },
       73: { icon: "⛄",  desc: "Snow" },
       75: { icon: "❄️⛄",  desc: "Heavy snow" },
+      77: { icon: "❄️⛄",   desc: "Snow grains" },
       80: { icon: "☔", desc: "Rain showers" },
       81: { icon: "☔", desc: "Rain showers" },
       82: { icon: "☔", desc: "Heavy showers" },
-      95: { icon: "⛈️", desc: "Thunderstorm" }
+      95: { icon: "⛈️", desc: "Thunderstorm" },
+      96: { icon: "⛈️", desc: "Thunderstorm" },
+      99: { icon: "⛈️", desc: "Thunderstorm" }
     };
     
     const info = weatherMap[current.weather_code] || { icon: "🌡️", desc: "Unknown" };
